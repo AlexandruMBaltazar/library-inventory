@@ -1,0 +1,29 @@
+{
+  "name": "LibraryEvent",
+  "type": "record",
+  "namespace": "com.learnkafka.model",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int"
+    },
+    {
+      "name": "book",
+      "type": {
+        "type": "record",
+        "namespace": "com.learnkafka.model",
+        "name": "Book",
+        "fields": [{
+          "name": "id",
+          "type": "int"
+        }, {
+          "name": "name",
+          "type": "string"
+        }, {
+          "name": "author",
+          "type": "string"
+        }]
+      }
+    }
+  ]
+}
