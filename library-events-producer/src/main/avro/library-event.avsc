@@ -4,8 +4,8 @@
   "namespace": "com.learnkafka.model",
   "fields": [
     {
-      "name": "id",
-      "type": "int"
+      "name": "libraryEventId",
+      "type": "long"
     },
     {
       "name": "book",
@@ -15,7 +15,7 @@
         "name": "Book",
         "fields": [{
           "name": "id",
-          "type": "int"
+          "type": "long"
         }, {
           "name": "name",
           "type": "string"

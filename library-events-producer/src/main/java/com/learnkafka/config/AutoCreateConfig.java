@@ -1,20 +1,20 @@
 package com.learnkafka.config;
 
+import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 
 @Configuration
+@RequiredArgsConstructor
 public class AutoCreateConfig {
 
-    @Value("${topic.library}")
-    private String libraryTopic;
+    private final ConfigProperties configProperties;
 
     @Bean
     public NewTopic libraryTopic() {
-        return TopicBuilder.name(libraryTopic)
+        return TopicBuilder.name(configProperties.getLibraryTopic())
                 .partitions(3)
                 .replicas(1)
                 .build();
