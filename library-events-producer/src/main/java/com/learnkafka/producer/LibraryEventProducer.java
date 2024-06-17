@@ -5,6 +5,7 @@ import com.learnkafka.config.ConfigProperties;
 import com.learnkafka.model.LibraryEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
@@ -17,11 +18,11 @@ import java.util.concurrent.CompletableFuture;
 public class LibraryEventProducer {
 
     private final ConfigProperties configProperties;
-    private final KafkaTemplate<Long, Object> kafkaTemplate;
+    private final KafkaTemplate<Long, LibraryEvent> kafkaTemplate;
 
     public String sendLibraryEvent(LibraryEvent libraryEvent) {
-        CompletableFuture<SendResult<Long, Object>> completableFuture = kafkaTemplate
-                .send(configProperties.getLibraryTopic(), libraryEvent.getLibraryEventId(), libraryEvent)
+        CompletableFuture<SendResult<Long, LibraryEvent>> completableFuture = kafkaTemplate
+                .send(createProducerRecord(libraryEvent.getLibraryEventId(), libraryEvent))
                 .toCompletableFuture();
 
         String messageJson = new Gson().toJson(libraryEvent);
@@ -35,5 +36,9 @@ public class LibraryEventProducer {
         });
 
         return "success";
+    }
+
+    private ProducerRecord<Long, LibraryEvent> createProducerRecord(long key, LibraryEvent body) {
+        return new ProducerRecord<>(configProperties.getLibraryTopic(), key, body);
     }
 }
