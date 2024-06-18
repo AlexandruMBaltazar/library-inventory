@@ -6,10 +6,14 @@ import com.learnkafka.model.LibraryEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeader;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Component
@@ -38,7 +42,12 @@ public class LibraryEventProducer {
         return "success";
     }
 
-    private ProducerRecord<Long, LibraryEvent> createProducerRecord(long key, LibraryEvent body) {
-        return new ProducerRecord<>(configProperties.getLibraryTopic(), key, body);
+    private ProducerRecord<Long, LibraryEvent> createProducerRecord(Long key, LibraryEvent body) {
+
+        final List<Header> recordHeaders = Collections.singletonList(
+                new RecordHeader("event-source", "scanner".getBytes())
+        );
+
+        return new ProducerRecord<Long, LibraryEvent>(configProperties.getLibraryTopic(), null, null, key, body, recordHeaders);
     }
 }
