@@ -48,6 +48,6 @@ public class LibraryEventProducer {
                 new RecordHeader("event-source", "scanner".getBytes())
         );
 
-        return new ProducerRecord<Long, LibraryEvent>(configProperties.getLibraryTopic(), null, null, key, body, recordHeaders);
+        return new ProducerRecord<>(configProperties.getLibraryTopic(), null, null, key, body, recordHeaders);
     }
 }

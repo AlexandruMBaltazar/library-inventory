@@ -7,5 +7,6 @@ import lombok.Data;
 @Builder
 public class LibraryEvent {
     private Long libraryEventId;
+    private LibraryEventType libraryEventType;
     private Book book;
 }

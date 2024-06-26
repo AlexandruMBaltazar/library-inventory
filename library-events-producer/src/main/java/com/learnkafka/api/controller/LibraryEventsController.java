@@ -1,6 +1,7 @@
 package com.learnkafka.api.controller;
 
 import com.learnkafka.api.model.LibraryEvent;
+import com.learnkafka.api.model.LibraryEventType;
 import com.learnkafka.service.LibraryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,7 +18,7 @@ public class LibraryEventsController {
 
     @PostMapping("v1/libraryevent")
     public ResponseEntity<LibraryEvent> postLibraryEvent(@RequestBody LibraryEvent libraryEvent) {
-        libraryService.process(libraryEvent);
+        libraryService.process(libraryEvent, LibraryEventType.NEW);
         return ResponseEntity.status(HttpStatus.CREATED).body(libraryEvent);
     }
 }

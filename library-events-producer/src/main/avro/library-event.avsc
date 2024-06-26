@@ -8,6 +8,14 @@
       "type": "long"
     },
     {
+      "name": "libraryEventType",
+      "type": {
+        "type": "enum",
+        "name": "LibraryEventType",
+        "symbols": ["NEW", "UPDATE"]
+      }
+    },
+    {
       "name": "book",
       "type": {
         "type": "record",
