@@ -1,0 +1,37 @@
+{
+  "name": "LibraryEvent",
+  "type": "record",
+  "namespace": "com.learnkafka.model",
+  "fields": [
+    {
+      "name": "libraryEventId",
+      "type": "long"
+    },
+    {
+      "name": "libraryEventType",
+      "type": {
+        "type": "enum",
+        "name": "LibraryEventType",
+        "symbols": ["NEW", "UPDATE"]
+      }
+    },
+    {
+      "name": "book",
+      "type": {
+        "type": "record",
+        "namespace": "com.learnkafka.model",
+        "name": "Book",
+        "fields": [{
+          "name": "id",
+          "type": "long"
+        }, {
+          "name": "name",
+          "type": "string"
+        }, {
+          "name": "author",
+          "type": "string"
+        }]
+      }
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.3.1'
+	id 'io.spring.dependency-management' version '1.1.5'
+	id "com.github.davidmc24.gradle.plugin.avro" version "1.8.0"
+}
+
+group = 'com.learnkafka'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+	gradlePluginPortal()
+	maven {
+		url "https://packages.confluent.io/maven"
+	}
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	//kafka
+	implementation 'org.springframework.kafka:spring-kafka'
+	//db
+	runtimeOnly 'com.h2database:h2'
+	//lombok
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	//confluent
+	implementation 'io.confluent:kafka-avro-serializer:7.4.0'
+	implementation 'io.confluent:kafka-schema-registry-client:7.4.0'
+	implementation 'io.confluent:kafka-streams-avro-serde:7.4.0'
+	//test
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+sourceSets {
+	test {
+		java.srcDirs = [
+				'src/test/java/unit',
+				'src/test/java/integration'
+		]
+	}
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
