@@ -16,6 +16,7 @@ spring:
     admin:
       properties:
         bootstrap.servers: localhost:9092
-
 topic:
   library: avro-library-tp
+server:
+  port: 8881
