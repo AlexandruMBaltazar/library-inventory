@@ -1,12 +1,16 @@
 package com.learnkafka.api.model;
 
-import lombok.Builder;
-import lombok.Data;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-@Data
-@Builder
-public class Book {
-    private Long id;
-    private String name;
-    private String author;
+public record Book(
+        @NotNull
+        Long id,
+
+        @NotBlank
+        String name,
+
+        @NotBlank
+        String author
+) {
 }

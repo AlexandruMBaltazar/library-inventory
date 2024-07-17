@@ -5,7 +5,8 @@
   "fields": [
     {
       "name": "libraryEventId",
-      "type": "long"
+      "type": ["null", "long"],
+      "default": null
     },
     {
       "name": "libraryEventType",

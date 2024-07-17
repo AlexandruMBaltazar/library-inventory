@@ -17,7 +17,7 @@ public class LibraryServiceImpl implements LibraryService {
 
     @Override
     public String process(LibraryEvent libraryEvent, LibraryEventType libraryEventType) {
-        libraryEvent.setLibraryEventType(libraryEventType);
+        libraryEvent = libraryEvent.withLibraryEventType(libraryEventType);
         return libraryEventProducer.sendLibraryEvent(libraryEventMapper.apiLibraryEventToLibraryEvent(libraryEvent));
     }
 }

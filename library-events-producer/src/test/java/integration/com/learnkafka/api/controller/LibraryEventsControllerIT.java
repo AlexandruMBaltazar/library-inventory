@@ -2,8 +2,8 @@ package com.learnkafka.api.controller;
 
 import com.learnkafka.api.model.Book;
 import com.learnkafka.api.model.LibraryEvent;
+import com.learnkafka.api.model.LibraryEventType;
 import com.learnkafka.config.ConfigProperties;
-import com.learnkafka.model.LibraryEventType;
 import io.confluent.kafka.serializers.KafkaAvroDeserializer;
 import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig;
 import org.apache.kafka.clients.consumer.Consumer;
@@ -73,26 +73,18 @@ public class LibraryEventsControllerIT {
     @Test
     void postLibraryEvent() {
         // Given
-        Book book = Book.builder()
-                .id(123L)
-                .author("TestAuthor")
-                .name("TestName")
-                .build();
-
-        LibraryEvent libraryEvent = LibraryEvent.builder()
-                .libraryEventId(123L)
-                .book(book)
-                .build();
+        Book book = new Book(123L, "TestAuthor", "TestName");
+        LibraryEvent libraryEvent = new LibraryEvent(123L, LibraryEventType.NEW, book);
 
         com.learnkafka.model.Book expectedBook = com.learnkafka.model.Book.newBuilder()
-                .setId(book.getId())
-                .setAuthor(book.getAuthor())
-                .setName(book.getName())
+                .setId(book.id())
+                .setAuthor(book.author())
+                .setName(book.name())
                 .build();
 
         com.learnkafka.model.LibraryEvent expectedLibraryEvent = com.learnkafka.model.LibraryEvent.newBuilder()
-                .setLibraryEventId(libraryEvent.getLibraryEventId())
-                .setLibraryEventType(LibraryEventType.NEW)
+                .setLibraryEventId(libraryEvent.libraryEventId())
+                .setLibraryEventType(com.learnkafka.model.LibraryEventType.NEW)
                 .setBook(expectedBook)
                 .build();
 

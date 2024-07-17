@@ -1,12 +1,16 @@
 package com.learnkafka.api.model;
 
-import lombok.Builder;
-import lombok.Data;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
-@Data
-@Builder
-public class LibraryEvent {
-    private Long libraryEventId;
-    private LibraryEventType libraryEventType;
-    private Book book;
+public record LibraryEvent(
+        Long libraryEventId,
+        LibraryEventType libraryEventType,
+        @NotNull
+        @Valid
+        Book book
+) {
+        public LibraryEvent withLibraryEventType(LibraryEventType newLibraryEventType) {
+                return new LibraryEvent(this.libraryEventId, newLibraryEventType, this.book);
+        }
 }
