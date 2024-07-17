@@ -39,6 +39,9 @@ dependencies {
 	//lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+	//mapstruct
+	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 	//confluent
 	implementation 'io.confluent:kafka-avro-serializer:7.4.0'
 	implementation 'io.confluent:kafka-schema-registry-client:7.4.0'

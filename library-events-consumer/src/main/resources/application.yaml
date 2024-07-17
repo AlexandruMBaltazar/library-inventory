@@ -9,10 +9,11 @@ spring:
       properties:
         schema.registry.url: http://localhost:8081
         allow.auto.create.topics: false
+        specific.avro.reader: true
       bootstrap-servers: localhost:9092
       group-id: library-events-listener-group
-      key-serializer: org.apache.kafka.common.serialization.LongDeserializer
-      value-serializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      key-deserializer: org.apache.kafka.common.serialization.LongDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
       interceptor.classes: io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor
     admin:
       properties:
