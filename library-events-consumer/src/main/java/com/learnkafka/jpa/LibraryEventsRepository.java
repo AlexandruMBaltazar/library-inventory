@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LibraryEventsRepository extends CrudRepository<LibraryEvent, Long> {
+    boolean existsByLibraryEventId(Long libraryEventId);
 }

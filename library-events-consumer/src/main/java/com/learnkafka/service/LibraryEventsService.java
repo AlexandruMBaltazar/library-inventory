@@ -3,6 +3,7 @@ package com.learnkafka.service;
 import com.learnkafka.entity.LibraryEvent;
 import com.learnkafka.jpa.LibraryEventsRepository;
 import com.learnkafka.mapper.LibraryEventMapper;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -30,7 +31,15 @@ public class LibraryEventsService {
     }
 
     private void update(LibraryEvent libraryEvent) {
-        // Update operation
+        if (libraryEvent.getLibraryEventId() == null) {
+            throw new IllegalArgumentException("Library Event ID is missing");
+        }
+
+        if (!libraryEventsRepository.existsByLibraryEventId(libraryEvent.getLibraryEventId())) {
+            throw new EntityNotFoundException("Library event to be updated does not exist");
+        }
+
+        save(libraryEvent);
     }
 
     private void save(LibraryEvent libraryEvent) {
