@@ -21,6 +21,10 @@ public class LibraryEventsConsumer {
     private final ConfigProperties configProperties;
     private final LibraryEventsService libraryEventsService;
 
+    /*
+        Things to keep in mind
+       !!! Consumer runs in a total different thread than the actual application thread !!!
+     */
     @KafkaListener(topics = "#{configProperties.libraryTopic}")
     public void onMessage(ConsumerRecord<Long, LibraryEvent> consumerRecord, @Headers MessageHeaders headers) throws IOException {
         log.info("### -> Header acquired: {}", headers);

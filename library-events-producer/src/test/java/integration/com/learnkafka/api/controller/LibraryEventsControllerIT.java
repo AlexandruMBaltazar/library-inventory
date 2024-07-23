@@ -72,21 +72,7 @@ public class LibraryEventsControllerIT {
 
     @Test
     void postLibraryEvent() {
-        // Given
-        Book book = new Book(123L, "TestAuthor", "TestName");
-        LibraryEvent libraryEvent = new LibraryEvent(123L, LibraryEventType.NEW, book);
-
-        com.learnkafka.model.Book expectedBook = com.learnkafka.model.Book.newBuilder()
-                .setId(book.id())
-                .setAuthor(book.author())
-                .setName(book.name())
-                .build();
-
-        com.learnkafka.model.LibraryEvent expectedLibraryEvent = com.learnkafka.model.LibraryEvent.newBuilder()
-                .setLibraryEventId(libraryEvent.libraryEventId())
-                .setLibraryEventType(com.learnkafka.model.LibraryEventType.NEW)
-                .setBook(expectedBook)
-                .build();
+s
 
         // When
         HttpHeaders headers = new HttpHeaders();

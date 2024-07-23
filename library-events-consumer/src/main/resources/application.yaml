@@ -15,9 +15,15 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.LongDeserializer
       value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
       interceptor.classes: io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor
-    admin:
+    producer:
       properties:
-        bootstrap.servers: localhost:9092
+        schema.registry.url: http://localhost:8081
+        allow.auto.create.topics: false
+      bootstrap-servers: localhost:9092
+      group-id: library_group
+      key-serializer: org.apache.kafka.common.serialization.LongSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      interceptor.classes: io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor
   datasource:
     url: jdbc:h2:mem:testdb
     driver-class-name: org.h2.Driver
