@@ -1,6 +1,9 @@
 package com.learnkafka.consumer;
 
 import com.learnkafka.config.ConfigProperties;
+import com.learnkafka.entity.Book;
+import com.learnkafka.entity.LibraryEvent;
+import com.learnkafka.entity.LibraryEventType;
 import com.learnkafka.jpa.LibraryEventsRepository;
 import com.learnkafka.service.LibraryEventsService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -46,13 +49,12 @@ public class LibraryEventsConsumerIT {
     @Autowired
     private KafkaTemplate<Long, com.learnkafka.model.LibraryEvent> kafkaTemplate;
 
-    // This endpoint registry has a hold of all listener containers
     @Autowired
     private KafkaListenerEndpointRegistry endpointRegistry;
 
     @Autowired
     private ConfigProperties configProperties;
-    
+
     @Autowired
     private LibraryEventsRepository libraryEventsRepository;
 
@@ -64,13 +66,7 @@ public class LibraryEventsConsumerIT {
 
     @BeforeEach
     void setUp() {
-        /*
-            Make sure that the container that we have "LibraryEventsConsumer" is going to wait until all partitions
-            are assigned to it
-         */
-        for (MessageListenerContainer messageListenerContainer : endpointRegistry.getListenerContainers()) {
-            ContainerTestUtils.waitForAssignment(messageListenerContainer, embeddedKafkaBroker.getPartitionsPerTopic());
-        }
+        waitForKafkaListenerContainers();
     }
 
     @AfterEach
@@ -78,42 +74,102 @@ public class LibraryEventsConsumerIT {
         libraryEventsRepository.deleteAll();
     }
 
-    @Test
-    void shouldPublishNewLibraryEvent() throws ExecutionException, InterruptedException, IOException {
-        // Given
-        com.learnkafka.model.Book expectedBook = com.learnkafka.model.Book.newBuilder()
-                .setId(123L)
-                .setAuthor("Test Author")
-                .setName("Test Name")
-                .build();
+    /*
+        Make sure that the container that we have "LibraryEventsConsumer" is going to wait until all partitions
+        are assigned to it
+     */
+    private void waitForKafkaListenerContainers() {
+        for (MessageListenerContainer messageListenerContainer : endpointRegistry.getListenerContainers()) {
+            ContainerTestUtils.waitForAssignment(messageListenerContainer, embeddedKafkaBroker.getPartitionsPerTopic());
+        }
+    }
 
-        com.learnkafka.model.LibraryEvent expectedLibraryEvent = com.learnkafka.model.LibraryEvent.newBuilder()
-                .setLibraryEventId(null)
-                .setLibraryEventType(com.learnkafka.model.LibraryEventType.NEW)
-                .setBook(expectedBook)
-                .build();
+    @Test
+    void shouldPublishNewLibraryEvent() throws ExecutionException, InterruptedException {
+        // Given
+        com.learnkafka.model.Book expectedBook = createBook(123L, "Test Author", "Test Name");
+        com.learnkafka.model.LibraryEvent expectedLibraryEvent = createLibraryEvent(null, com.learnkafka.model.LibraryEventType.NEW, expectedBook);
 
         // When
         kafkaTemplate.send(configProperties.getLibraryTopic(), expectedLibraryEvent).get();
 
         // Then
-
         /*
             Consumer runs in a total different thread than the actual application thread
             It might take a while for the consumer to read the record and process it
          */
-        await().atMost(3, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(libraryEventsConsumerSpy, times(1))
-                    .onMessage(isA(ConsumerRecord.class), isA(MessageHeaders.class));
-            verify(libraryEventsServiceSpy, times(1))
-                    .processLibraryEvent(isA(ConsumerRecord.class));
+        await().atMost(3, TimeUnit.SECONDS).untilAsserted(() -> verifyLibraryEventProcessed(expectedLibraryEvent, expectedBook));
+    }
 
-            libraryEventsRepository.findAll().forEach(actualLibraryEvent -> assertAll(
-                    () -> assertEquals(expectedLibraryEvent.getLibraryEventType().toString(), actualLibraryEvent.getLibraryEventType().toString()),
-                    () -> assertEquals(expectedBook.getId(), actualLibraryEvent.getBook().getId()),
-                    () -> assertEquals(expectedBook.getAuthor(), actualLibraryEvent.getBook().getAuthor()),
-                    () -> assertEquals(expectedBook.getName(), actualLibraryEvent.getBook().getName())
-            ));
+    @Test
+    void shouldPublishUpdateLibraryEvent() throws ExecutionException, InterruptedException {
+        // Given
+        Book book = Book.builder()
+                .id(123L)
+                .author("Test Author")
+                .name("Test Name")
+                .build();
+
+        LibraryEvent libraryEvent = LibraryEvent.builder()
+                .libraryEventId(null)
+                .libraryEventType(LibraryEventType.NEW)
+                .book(book)
+                .build();
+        book.setLibraryEvent(libraryEvent);
+
+        libraryEventsRepository.save(libraryEvent);
+
+        com.learnkafka.model.Book updatedBook = createBook(123L, "Updated Author", "Updated Name");
+        com.learnkafka.model.LibraryEvent updatedLibraryEvent = createLibraryEvent(libraryEvent.getLibraryEventId(), com.learnkafka.model.LibraryEventType.UPDATE, updatedBook);
+
+        // When
+        kafkaTemplate.send(configProperties.getLibraryTopic(), updatedLibraryEvent).get();
+
+        // Then
+        await().atMost(3, TimeUnit.SECONDS).untilAsserted(() -> {
+            verifyLibraryEventProcessed(updatedLibraryEvent, updatedBook);
+            verifyUpdatedLibraryEvent(libraryEvent, updatedBook);
         });
+    }
+
+    private com.learnkafka.model.Book createBook(Long id, String author, String name) {
+        return com.learnkafka.model.Book.newBuilder()
+                .setId(id)
+                .setAuthor(author)
+                .setName(name)
+                .build();
+    }
+
+    private com.learnkafka.model.LibraryEvent createLibraryEvent(Long libraryEventId, com.learnkafka.model.LibraryEventType libraryEventType, com.learnkafka.model.Book book) {
+        return com.learnkafka.model.LibraryEvent.newBuilder()
+                .setLibraryEventId(libraryEventId)
+                .setLibraryEventType(libraryEventType)
+                .setBook(book)
+                .build();
+    }
+
+    private void verifyLibraryEventProcessed(com.learnkafka.model.LibraryEvent expectedLibraryEvent, com.learnkafka.model.Book expectedBook) throws IOException {
+        verify(libraryEventsConsumerSpy, times(1))
+                .onMessage(isA(ConsumerRecord.class), isA(MessageHeaders.class));
+        verify(libraryEventsServiceSpy, times(1))
+                .processLibraryEvent(isA(ConsumerRecord.class));
+
+        libraryEventsRepository.findAll().forEach(actualLibraryEvent -> assertAll(
+                () -> assertEquals(expectedLibraryEvent.getLibraryEventType().toString(), actualLibraryEvent.getLibraryEventType().toString()),
+                () -> assertEquals(expectedBook.getId(), actualLibraryEvent.getBook().getId()),
+                () -> assertEquals(expectedBook.getAuthor(), actualLibraryEvent.getBook().getAuthor()),
+                () -> assertEquals(expectedBook.getName(), actualLibraryEvent.getBook().getName())
+        ));
+    }
+
+    private void verifyUpdatedLibraryEvent(LibraryEvent libraryEvent, com.learnkafka.model.Book updatedBook) {
+        LibraryEvent actualLibraryEvent = libraryEventsRepository.findById(libraryEvent.getLibraryEventId()).get();
+
+        assertAll(
+                () -> assertEquals(LibraryEventType.UPDATE, actualLibraryEvent.getLibraryEventType()),
+                () -> assertEquals(updatedBook.getId(), actualLibraryEvent.getBook().getId()),
+                () -> assertEquals(updatedBook.getAuthor(), actualLibraryEvent.getBook().getAuthor()),
+                () -> assertEquals(updatedBook.getName(), actualLibraryEvent.getBook().getName())
+        );
     }
 }
