@@ -9,4 +9,7 @@ import org.springframework.context.annotation.Configuration;
 public class ConfigProperties {
     @Value("${topic.library}")
     private String libraryTopic;
+
+    @Value("${topic.dead-letter-topic}")
+    private String libraryDeadLetterTopic;
 }

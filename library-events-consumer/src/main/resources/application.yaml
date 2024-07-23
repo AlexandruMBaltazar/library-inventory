@@ -36,5 +36,6 @@ spring:
       enabled: true
 topic:
   library: avro-library-tp
+  dead-letter-topic: library-events-dlq
 server:
   port: 8882

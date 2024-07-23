@@ -5,6 +5,7 @@ import com.learnkafka.entity.Book;
 import com.learnkafka.entity.LibraryEvent;
 import com.learnkafka.entity.LibraryEventType;
 import com.learnkafka.jpa.LibraryEventsRepository;
+import com.learnkafka.producer.DeadLetterQueueProducer;
 import com.learnkafka.service.LibraryEventsService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.AfterEach;
@@ -34,7 +35,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@EmbeddedKafka(topics = {"avro-library-tp"}, partitions = 3)
+@EmbeddedKafka(topics = {"avro-library-tp", "library-events-dlq"}, partitions = 3)
 @TestPropertySource(properties = {
         "spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}",
         "spring.kafka.consumer.bootstrap-servers=${spring.embedded.kafka.brokers}",
@@ -63,6 +64,9 @@ public class LibraryEventsConsumerIT {
 
     @SpyBean
     private LibraryEventsService libraryEventsServiceSpy;
+
+    @SpyBean
+    private DeadLetterQueueProducer deadLetterQueueProducer;
 
     @BeforeEach
     void setUp() {
@@ -130,6 +134,19 @@ public class LibraryEventsConsumerIT {
             verifyLibraryEventProcessed(updatedLibraryEvent, updatedBook);
             verifyUpdatedLibraryEvent(libraryEvent, updatedBook);
         });
+    }
+
+    @Test
+    void publishUpdateLibraryEventWithNullLibraryEventIdIsSentToDLQ() throws ExecutionException, InterruptedException {
+        com.learnkafka.model.Book updatedBook = createBook(123L, "Updated Author", "Updated Name");
+        com.learnkafka.model.LibraryEvent updatedLibraryEvent = createLibraryEvent(null , com.learnkafka.model.LibraryEventType.UPDATE, updatedBook);
+
+        // When
+        kafkaTemplate.send(configProperties.getLibraryTopic(), updatedLibraryEvent).get();
+
+        // Then
+        await().atMost(3, TimeUnit.SECONDS).untilAsserted(() -> verify(deadLetterQueueProducer, times(1))
+                .send(isA(ConsumerRecord.class)));
     }
 
     private com.learnkafka.model.Book createBook(Long id, String author, String name) {
