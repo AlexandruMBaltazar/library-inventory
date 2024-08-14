@@ -4,6 +4,7 @@ import com.learnkafka.entity.LibraryEvent;
 import com.learnkafka.exception.RetryableMessagingException;
 import com.learnkafka.jpa.LibraryEventsRepository;
 import com.learnkafka.mapper.LibraryEventMapper;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -19,25 +20,30 @@ public class LibraryEventsService {
 
     public void processLibraryEvent(ConsumerRecord<Long, com.learnkafka.model.LibraryEvent> consumerRecord) {
         LibraryEvent libraryEvent = libraryEventMapper.libraryEventToLibraryEventEntity(consumerRecord.value());
-        log.info("libraryEvent: {}", libraryEvent);
+        log.info("Processing library event: {}", libraryEvent);
 
-        switch (libraryEvent.getLibraryEventType()) {
-            case NEW -> save(libraryEvent);
-            case UPDATE -> update(libraryEvent);
-            default -> log.error("Invalid Library Event Type");
+        try {
+            switch (libraryEvent.getLibraryEventType()) {
+                case NEW -> save(libraryEvent);
+                case UPDATE -> update(libraryEvent);
+                default -> log.error("Invalid Library Event Type: {}", libraryEvent.getLibraryEventType());
+            }
+        } catch (IllegalArgumentException | EntityNotFoundException e) {
+            log.error("Error processing library event: {} - Exception: {}", libraryEvent, e.getMessage(), e);
+            throw new RetryableMessagingException("Error processing library event");
+        } catch (Exception e) {
+            log.error("Unexpected error processing library event: {} - Exception: {}", libraryEvent, e.getMessage(), e);
+            throw new RetryableMessagingException("Unexpected error", e);
         }
     }
 
     private void update(LibraryEvent libraryEvent) {
         if (libraryEvent.getLibraryEventId() == null) {
-            log.warn("Library Event ID is missing");
-            throw new RetryableMessagingException("Library Event ID is missing");
+            throw new IllegalArgumentException("Library Event ID is missing");
         }
 
         if (!libraryEventsRepository.existsByLibraryEventId(libraryEvent.getLibraryEventId())) {
-            log.warn("Library Event not found with Id: {} - retrying update event", libraryEvent.getLibraryEventId());
-            throw new RetryableMessagingException("Library Event found with Id: " +
-                    libraryEvent.getLibraryEventId() + "- retrying update event");
+            throw new EntityNotFoundException("Library Event not found with Id: " + libraryEvent.getLibraryEventId());
         }
 
         save(libraryEvent);
@@ -45,7 +51,12 @@ public class LibraryEventsService {
 
     private void save(LibraryEvent libraryEvent) {
         libraryEvent.getBook().setLibraryEvent(libraryEvent);
-        libraryEventsRepository.save(libraryEvent);
-        log.info("Successfully saved new library event");
+        try {
+            libraryEventsRepository.save(libraryEvent);
+            log.info("Successfully saved new library event");
+        } catch (Exception e) {
+            log.error("Error saving library event: {} - Exception: {}", libraryEvent, e.getMessage(), e);
+            throw e; // Ensure exceptions during save are retried
+        }
     }
 }
