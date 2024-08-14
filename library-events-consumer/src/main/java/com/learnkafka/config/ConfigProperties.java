@@ -12,4 +12,7 @@ public class ConfigProperties {
 
     @Value("${topic.dead-letter-topic}")
     private String libraryDeadLetterTopic;
+
+    @Value("${topic.retry-topic}")
+    private String retryTopic;
 }

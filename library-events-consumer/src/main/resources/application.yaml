@@ -36,6 +36,7 @@ spring:
       enabled: true
 topic:
   library: avro-library-tp
-  dead-letter-topic: library-events-dlq
+  dead-letter-topic: avro-library-dlt
+  retry-topic: avro-library-retry
 server:
   port: 8882

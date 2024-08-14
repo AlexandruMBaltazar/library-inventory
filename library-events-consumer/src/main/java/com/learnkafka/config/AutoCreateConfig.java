@@ -12,11 +12,11 @@ public class AutoCreateConfig {
 
     private final ConfigProperties configProperties;
 
-    @Bean
-    public NewTopic libraryDeadLetterTopic() {
-        return TopicBuilder.name(configProperties.getLibraryDeadLetterTopic())
-                .partitions(3)
-                .replicas(1)
-                .build();
-    }
+//    @Bean
+//    public NewTopic libraryDeadLetterTopic() {
+//        return TopicBuilder.name(configProperties.getLibraryDeadLetterTopic())
+//                .partitions(3)
+//                .replicas(1)
+//                .build();
+//    }
 }
